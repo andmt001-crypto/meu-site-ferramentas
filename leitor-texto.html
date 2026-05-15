@@ -2,7 +2,7 @@
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
-    <title>Leitor de Texto - Vozes Premium</title>
+    <title>Leitor de Texto - Com Voz do Bob Esponja</title>
     <style>
         * {
             margin: 0;
@@ -14,9 +14,6 @@
             font-family: 'Segoe UI', Arial, sans-serif;
             background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             padding: 20px;
         }
 
@@ -25,12 +22,23 @@
             backdrop-filter: blur(10px);
             border-radius: 20px;
             padding: 30px;
-            max-width: 750px;
+            max-width: 800px;
             width: 100%;
+            margin: 0 auto;
         }
 
-        h1 { color: white; text-align: center; margin-bottom: 10px; }
-        .subtitulo { color: #aaa; text-align: center; margin-bottom: 25px; font-size: 14px; }
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .subtitulo {
+            color: #aaa;
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
 
         textarea {
             width: 100%;
@@ -44,32 +52,21 @@
             resize: vertical;
         }
 
-        .modos {
-            margin: 20px 0;
-            display: flex;
-            gap: 10px;
-        }
-
-        .btn-modo {
-            flex: 1;
-            padding: 12px;
-            background: #333;
-            border: none;
+        .status-voicebox {
+            background: #1a1a1a;
+            padding: 10px;
             border-radius: 10px;
-            cursor: pointer;
+            margin-bottom: 20px;
+            text-align: center;
             font-size: 14px;
         }
 
-        .btn-modo.ativo {
-            background: #ff0000;
+        .conectado {
+            color: #4CAF50;
         }
 
-        .vozes-panel {
-            display: none;
-        }
-
-        .vozes-panel.ativo {
-            display: block;
+        .desconectado {
+            color: #f44336;
         }
 
         .botoes {
@@ -86,19 +83,29 @@
             border-radius: 10px;
             cursor: pointer;
             font-size: 16px;
+            font-weight: bold;
         }
 
-        .btn-primario { background: #ff0000; color: white; }
-        .btn-secundario { background: #333; color: white; }
-        .btn-verde { background: #4CAF50; color: white; }
+        .btn-primario {
+            background: #ff0000;
+            color: white;
+        }
 
-        .status {
+        .btn-secundario {
+            background: #333;
+            color: white;
+        }
+
+        .btn-esponja {
+            background: #ff9800;
+            color: #1a1a1a;
+        }
+
+        .vozes-panel {
             margin-top: 20px;
             padding: 15px;
             background: rgba(0,0,0,0.3);
-            border-radius: 10px;
-            color: #aaa;
-            text-align: center;
+            border-radius: 15px;
         }
 
         select {
@@ -111,235 +118,224 @@
             margin: 10px 0;
         }
 
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            color: #aaa;
+            text-align: center;
+        }
+
         .dica {
-            margin-top: 10px;
+            margin-top: 15px;
             font-size: 12px;
             color: #ff9800;
+            text-align: center;
         }
 
         footer {
             text-align: center;
             margin-top: 20px;
             color: #555;
-            font-size: 12px;
+            font-size: 11px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔊 Leitor de Texto Premium</h1>
-        <div class="subtitulo">Vozes naturais de IA | Modo Web Speech (offline) + Modo Uberduck (online)</div>
+        <h1>🔊 Leitor de Texto com Voz do Bob Esponja</h1>
+        <div class="subtitulo">O Voicebox precisa estar rodando no seu computador</div>
 
-        <textarea id="texto" placeholder="Digite o texto que deseja ouvir..."></textarea>
-
-        <div class="modos">
-            <button class="btn-modo" id="modoLocal" onclick="ativarModo('local')">🎤 Vozes do Sistema (offline)</button>
-            <button class="btn-modo" id="modoUberduck" onclick="ativarModo('uberduck')">🤖 Vozes Premium (online)</button>
+        <div class="status-voicebox" id="voiceboxStatus">
+            🔍 Verificando conexão com Voicebox...
         </div>
 
-        <!-- Modo Local -->
-        <div id="panelLocal" class="vozes-panel">
-            <select id="vozLocal"></select>
-            <div class="controles">
-                <label>Velocidade: <input type="range" id="velocidade" min="0.5" max="2" step="0.1" value="1"></label>
-                <label>Tom: <input type="range" id="pitch" min="0.5" max="2" step="0.1" value="1"></label>
+        <textarea id="texto" placeholder="Digite o texto que você quer ouvir com a voz do Bob Esponja...&#10;&#10;Exemplo: Olá! Eu sou o Bob Esponja! Quem mora numa pineapple debaixo do mar?"></textarea>
+
+        <div class="vozes-panel">
+            <label style="color: white;">🎤 Selecione a Voz:</label>
+            <select id="vozSelect">
+                <option value="">Carregando vozes...</option>
+            </select>
+            <div class="dica">
+                💡 Mostrando apenas vozes disponíveis no Voicebox. Mantenha o Voicebox aberto!
             </div>
         </div>
 
-        <!-- Modo Uberduck -->
-        <div id="panelUberduck" class="vozes-panel">
-            <select id="vozUberduck">
-                <option value="polly_joanna">🇺🇸 Joanna - Feminino (US)</option>
-                <option value="polly_matthew">🇺🇸 Matthew - Masculino (US)</option>
-                <option value="polly_ricardo">🇧🇷 Ricardo - Português (BR)</option>
-                <option value="polly_camila">🇧🇷 Camila - Português (BR)</option>
-                <option value="google_wavenet_a">🇺🇸 Google Wavenet A - Feminino</option>
-                <option value="azure_guy">🇺🇸 Azure Guy - Masculino</option>
-                <option value="azure_jane">🇺🇸 Azure Jane - Feminino</option>
-            </select>
-        </div>
-
         <div class="botoes">
-            <button class="btn-primario" onclick="lerTexto()">🔊 Ler Texto</button>
-            <button class="btn-secundario" onclick="parar()">⏹️ Parar</button>
-            <button class="btn-verde" onclick="limpar()">🗑️ Limpar</button>
+            <button class="btn-primario" onclick="gerarAudio()">🔊 Falar com Bob Esponja</button>
+            <button class="btn-secundario" onclick="pararAudio()">⏹️ Parar</button>
         </div>
 
         <div class="status" id="status">
-            ✅ Pronto para ler
-        </div>
-
-        <div class="dica">
-            💡 Dica: O modo Uberduck requer conexão com a internet e gera áudio com qualidade profissional.
+            ✅ Pronto para gerar áudio
         </div>
 
         <footer>
-            🔐 As vozes premium são geradas por IA da AWS, Google e Microsoft
+            🔒 O Voicebox roda localmente. O áudio é gerado no seu computador, nada vai para a internet.
         </footer>
     </div>
 
     <script>
-        // Variáveis
-        let modoAtual = 'local';
+        // Configuração
+        const VOICEBOX_API = 'http://localhost:17493';
         let vozesDisponiveis = [];
+        let audioAtual = null;
 
-        // ============ PARTE 1: CONFIGURAÇÃO DO BACKEND ============
-        // IMPORTANTE: O backend será criado separadamente (ver API route abaixo)
-        const API_URL = '/api/uberduck-speak'; // Endpoint que vamos criar no Vercel
+        // Elementos DOM
+        const statusDiv = document.getElementById('status');
+        const voiceboxStatusDiv = document.getElementById('voiceboxStatus');
+        const vozSelect = document.getElementById('vozSelect');
+        const textoInput = document.getElementById('texto');
 
-        // ============ PARTE 2: MODO LOCAL (Web Speech API) ============
-        function carregarVozesLocal() {
-            vozesDisponiveis = speechSynthesis.getVoices();
-            const select = document.getElementById('vozLocal');
+        // Verificar conexão com Voicebox e carregar vozes
+        async function verificarVoicebox() {
+            try {
+                const response = await fetch(`${VOICEBOX_API}/profiles`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (response.ok) {
+                    const perfis = await response.json();
+                    voiceboxStatusDiv.innerHTML = '✅ Voicebox: <span class="conectado">Conectado</span> - Pronto para usar!';
+                    
+                    // Carregar vozes disponíveis
+                    if (perfis && perfis.length > 0) {
+                        vozesDisponiveis = perfis;
+                        atualizarSelectVozes();
+                    } else {
+                        vozSelect.innerHTML = '<option value="">Nenhuma voz encontrada. Crie um perfil no Voicebox!</option>';
+                        atualizarStatus('⚠️ Nenhum perfil de voz encontrado. Crie um no Voicebox primeiro.', true);
+                    }
+                    return true;
+                } else {
+                    throw new Error('Resposta inválida');
+                }
+            } catch (erro) {
+                console.error('Erro ao conectar com Voicebox:', erro);
+                voiceboxStatusDiv.innerHTML = '❌ Voicebox: <span class="desconectado">Desconectado</span> - Abra o Voicebox no seu computador';
+                vozSelect.innerHTML = '<option value="">Voicebox não encontrado</option>';
+                return false;
+            }
+        }
+
+        function atualizarSelectVozes() {
+            vozSelect.innerHTML = '';
             
-            // Filtrar vozes em português primeiro
-            const vozesPT = vozesDisponiveis.filter(v => v.lang.startsWith('pt'));
-            const outras = vozesDisponiveis.filter(v => !v.lang.startsWith('pt'));
+            // Primeiro, tentar encontrar o Bob Esponja
+            const bobProfile = vozesDisponiveis.find(v => 
+                v.name?.toLowerCase().includes('bob') || 
+                v.name?.toLowerCase().includes('esponja') ||
+                v.name?.toLowerCase().includes('spongebob')
+            );
             
-            select.innerHTML = '';
-            [...vozesPT, ...outras].forEach((voz, i) => {
+            if (bobProfile) {
                 const option = document.createElement('option');
-                option.value = i;
-                let nome = voz.name;
-                if (voz.lang === 'pt-BR') nome = '🇧🇷 ' + nome;
-                else if (voz.lang === 'pt-PT') nome = '🇵🇹 ' + nome;
-                option.textContent = `${nome} (${voz.lang})`;
-                select.appendChild(option);
+                option.value = bobProfile.id;
+                option.textContent = `🧽 ${bobProfile.name} (BOB ESPONJA)`;
+                vozSelect.appendChild(option);
+            }
+            
+            // Adicionar as outras vozes
+            vozesDisponiveis.forEach(voz => {
+                if (!bobProfile || voz.id !== bobProfile.id) {
+                    const option = document.createElement('option');
+                    option.value = voz.id;
+                    let nomeExibicao = voz.name || 'Voz sem nome';
+                    if (voz.language === 'pt') nomeExibicao += ' 🇵🇹';
+                    else if (voz.language === 'pt-BR') nomeExibicao += ' 🇧🇷';
+                    option.textContent = `🎤 ${nomeExibicao}`;
+                    vozSelect.appendChild(option);
+                }
             });
+            
+            if (vozesDisponiveis.length === 0) {
+                vozSelect.innerHTML = '<option value="">Crie um perfil de voz no Voicebox</option>';
+            }
         }
 
-        function lerLocal() {
-            const texto = document.getElementById('texto').value.trim();
+        async function gerarAudio() {
+            const texto = textoInput.value.trim();
+            const vozId = vozSelect.value;
+            
             if (!texto) {
-                alert('Digite algum texto!');
-                return false;
+                alert('Digite algum texto para falar!');
+                return;
             }
             
-            speechSynthesis.cancel();
-            
-            const utterance = new SpeechSynthesisUtterance(texto);
-            const vozIndex = document.getElementById('vozLocal').value;
-            if (vozIndex && vozesDisponiveis[vozIndex]) {
-                utterance.voice = vozesDisponiveis[vozIndex];
+            if (!vozId) {
+                alert('Selecione uma voz (crie o perfil do Bob Esponja no Voicebox primeiro)!');
+                return;
             }
             
-            utterance.rate = parseFloat(document.getElementById('velocidade').value);
-            utterance.pitch = parseFloat(document.getElementById('pitch').value);
-            
-            utterance.onstart = () => atualizarStatus('🔊 Lendo...', false);
-            utterance.onend = () => atualizarStatus('✅ Leitura concluída!');
-            utterance.onerror = () => atualizarStatus('❌ Erro na leitura');
-            
-            speechSynthesis.speak(utterance);
-            return true;
-        }
-
-        // ============ PARTE 3: MODO UBERDUCK (API) ============
-        async function lerUberduck() {
-            const texto = document.getElementById('texto').value.trim();
-            if (!texto) {
-                alert('Digite algum texto!');
-                return false;
-            }
-            
-            atualizarStatus('🎙️ Gerando áudio com IA...', false);
+            atualizarStatus('🎙️ Gerando áudio com Voicebox...', false);
             
             try {
-                // Limitar texto (API aceita até 10.000 caracteres)
-                const textoLimitado = texto.substring(0, 5000);
-                
-                const response = await fetch(API_URL, {
+                // Chamar a API do Voicebox para gerar áudio
+                const response = await fetch(`${VOICEBOX_API}/generate`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        text: textoLimitado,
-                        voice: document.getElementById('vozUberduck').value
+                        text: texto,
+                        profile_id: vozId,
+                        language: 'pt'
                     })
                 });
                 
                 if (!response.ok) {
-                    const erro = await response.text();
-                    throw new Error(`Erro ${response.status}: ${erro}`);
+                    throw new Error(`Erro ${response.status}`);
                 }
                 
                 const data = await response.json();
                 
                 if (data.audio_url) {
-                    // Reproduzir o áudio
-                    const audio = new Audio(data.audio_url);
-                    audio.onplay = () => atualizarStatus('🎵 Tocando áudio gerado...');
-                    audio.onended = () => atualizarStatus('✅ Reprodução concluída!');
-                    audio.onerror = () => atualizarStatus('❌ Erro ao reproduzir áudio');
-                    await audio.play();
-                    return true;
+                    // Reproduzir o áudio gerado
+                    if (audioAtual) {
+                        audioAtual.pause();
+                        audioAtual = null;
+                    }
+                    
+                    audioAtual = new Audio(data.audio_url);
+                    audioAtual.onplay = () => atualizarStatus('🔊 Reproduzindo áudio do Bob Esponja...');
+                    audioAtual.onended = () => atualizarStatus('✅ Áudio concluído!', true);
+                    audioAtual.onerror = () => atualizarStatus('❌ Erro ao reproduzir áudio', true);
+                    await audioAtual.play();
                 } else {
                     throw new Error('URL de áudio não recebida');
                 }
                 
-            } catch (error) {
-                console.error('Erro Uberduck:', error);
-                atualizarStatus(`❌ Erro: ${error.message}. Usando modo local como fallback...`, false);
-                
-                // Fallback para o modo local se a API falhar
-                setTimeout(() => lerLocal(), 100);
-                return false;
+            } catch (erro) {
+                console.error('Erro na geração:', erro);
+                atualizarStatus(`❌ Erro: ${erro.message}. Verifique se o Voicebox está aberto.`, true);
             }
         }
 
-        // ============ FUNÇÕES DE CONTROLE ============
-        function lerTexto() {
-            if (modoAtual === 'local') {
-                lerLocal();
-            } else {
-                lerUberduck();
+        function pararAudio() {
+            if (audioAtual) {
+                audioAtual.pause();
+                audioAtual = null;
+                atualizarStatus('⏹️ Reprodução interrompida', true);
             }
         }
 
-        function parar() {
-            if (modoAtual === 'local') {
-                speechSynthesis.cancel();
-            }
-            atualizarStatus('⏹️ Leitura interrompida', true);
-        }
-
-        function limpar() {
-            parar();
-            document.getElementById('texto').value = '';
-        }
-
-        function atualizarStatus(mensagem, temporaria = true) {
-            const statusDiv = document.getElementById('status');
-            statusDiv.innerHTML = `✅ ${mensagem}`;
+        function atualizarStatus(mensagem, temporaria = false) {
+            statusDiv.innerHTML = `📢 ${mensagem}`;
             if (temporaria) {
                 setTimeout(() => {
-                    if (statusDiv.innerHTML === `✅ ${mensagem}`) {
-                        statusDiv.innerHTML = '✅ Pronto para ler';
+                    if (statusDiv.innerHTML === `📢 ${mensagem}`) {
+                        statusDiv.innerHTML = '✅ Pronto para gerar áudio';
                     }
                 }, 3000);
             }
         }
 
-        function ativarModo(modo) {
-            modoAtual = modo;
-            
-            document.getElementById('modoLocal').classList.toggle('ativo', modo === 'local');
-            document.getElementById('modoUberduck').classList.toggle('ativo', modo === 'uberduck');
-            
-            document.getElementById('panelLocal').classList.toggle('ativo', modo === 'local');
-            document.getElementById('panelUberduck').classList.toggle('ativo', modo === 'uberduck');
-            
-            const mensagem = modo === 'local' 
-                ? 'Modo local ativado (vozes do sistema, funciona offline)'
-                : 'Modo premium ativado (vozes de IA de alta qualidade)';
-            atualizarStatus(mensagem, true);
-        }
-
-        // Inicialização
-        speechSynthesis.onvoiceschanged = carregarVozesLocal;
-        carregarVozesLocal();
-        ativarModo('local');
+        // Verificar o Voicebox a cada 5 segundos
+        setInterval(verificarVoicebox, 5000);
+        
+        // Inicializar
+        verificarVoicebox();
     </script>
 </body>
 </html>
