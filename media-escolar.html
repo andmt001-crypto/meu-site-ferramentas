@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Calculadora de Média Escolar</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .subtitulo {
+            color: #aaa;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .materia {
+            background: rgba(0,0,0,0.3);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .materia-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .materia-nome {
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .btn-remover {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .notas {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .nota-input {
+            flex: 1;
+            min-width: 80px;
+        }
+
+        .nota-input label {
+            display: block;
+            color: #aaa;
+            font-size: 11px;
+            margin-bottom: 5px;
+        }
+
+        .nota-input input {
+            width: 100%;
+            padding: 8px;
+            border-radius: 8px;
+            border: none;
+            background: #0f0f0f;
+            color: white;
+            text-align: center;
+        }
+
+        .materia-actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-adicionar-nota {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .btn-nova-materia {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        .resultado {
+            background: rgba(0,0,0,0.5);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .media-geral {
+            font-size: 48px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .status {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .aprovado {
+            color: #4CAF50;
+        }
+
+        .recuperacao {
+            color: #ff9800;
+        }
+
+        .reprovado {
+            color: #f44336;
+        }
+
+        .btn-reset {
+            background: #666;
+            margin-top: 10px;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #555;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 Calculadora de Média Escolar</h1>
+        <div class="subtitulo">Adicione suas matérias e notas</div>
+
+        <div id="materias-container"></div>
+
+        <button class="btn-nova-materia" onclick="adicionarMateria()">+ Nova Matéria</button>
+        <button class="btn-nova-materia btn-reset" onclick="resetarTudo()">🔄 Resetar Tudo</button>
+
+        <div class="resultado" id="resultado">
+            <div>Média Geral</div>
+            <div class="media-geral" id="mediaGeral">0.00</div>
+            <div class="status" id="status"></div>
+        </div>
+
+        <footer>💡 Dica: Cada matéria pode ter quantas notas quiser</footer>
+    </div>
+
+    <script>
+        // Carregar dados salvos ou iniciar vazio
+        let materias = JSON.parse(localStorage.getItem('mediaEscolar')) || [];
+
+        function salvar() {
+            localStorage.setItem('mediaEscolar', JSON.stringify(materias));
+        }
+
+        function adicionarMateria() {
+            const nome = prompt('Digite o nome da matéria:', `Matéria ${materias.length + 1}`);
+            if (nome && nome.trim()) {
+                materias.push({
+                    nome: nome.trim(),
+                    notas: []
+                });
+                salvar();
+                renderizar();
+            }
+        }
+
+        function removerMateria(index) {
+            if (confirm(`Remover "${materias[index].nome}"?`)) {
+                materias.splice(index, 1);
+                salvar();
+                renderizar();
+            }
+        }
+
+        function adicionarNota(materiaIndex) {
+            let nota = prompt('Digite a nota (0 a 10):', '7.0');
+            if (nota !== null) {
+                nota = parseFloat(nota.replace(',', '.'));
+                if (!isNaN(nota) && nota >= 0 && nota <= 10) {
+                    materias[materiaIndex].notas.push(nota);
+                    salvar();
+                    renderizar();
+                } else {
+                    alert('Nota inválida! Digite um valor entre 0 e 10.');
+                }
+            }
+        }
+
+        function removerNota(materiaIndex, notaIndex) {
+            materias[materiaIndex].notas.splice(notaIndex, 1);
+            salvar();
+            renderizar();
+        }
+
+        function atualizarNota(materiaIndex, notaIndex, novoValor) {
+            materias[materiaIndex].notas[notaIndex] = novoValor;
+            salvar();
+            renderizar();
+        }
+
+        function calcularMediaMateria(notas) {
+            if (notas.length === 0) return 0;
+            const soma = notas.reduce((a, b) => a + b, 0);
+            return soma / notas.length;
+        }
+
+        function calcularMediaGeral() {
+            if (materias.length === 0) return 0;
+            
+            let somaMedias = 0;
+            let materiasComNota = 0;
+            
+            materias.forEach(materia => {
+                const media = calcularMediaMateria(materia.notas);
+                if (materia.notas.length > 0) {
+                    somaMedias += media;
+                    materiasComNota++;
+                }
+            });
+            
+            if (materiasComNota === 0) return 0;
+            return somaMedias / materiasComNota;
+        }
+
+        function getStatus(media) {
+            if (media >= 7) return { texto: '✅ APROVADO!', classe: 'aprovado' };
+            if (media >= 5) return { texto: '⚠️ RECUPERAÇÃO', classe: 'recuperacao' };
+            return { texto: '❌ REPROVADO', classe: 'reprovado' };
+        }
+
+        function renderizar() {
+            const container = document.getElementById('materias-container');
+            
+            if (materias.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #666; padding: 30px;">Clique em "Nova Matéria" para começar</div>';
+            } else {
+                container.innerHTML = materias.map((materia, idx) => {
+                    const mediaMateria = calcularMediaMateria(materia.notas);
+                    return `
+                        <div class="materia">
+                            <div class="materia-header">
+                                <span class="materia-nome">📖 ${escapeHtml(materia.nome)}</span>
+                                <button class="btn-remover" onclick="removerMateria(${idx})">🗑️ Remover</button>
+                            </div>
+                            <div class="notas" id="notas-${idx}">
+                                ${materia.notas.map((nota, notaIdx) => `
+                                    <div class="nota-input">
+                                        <label>Nota ${notaIdx + 1}</label>
+                                        <input type="number" step="0.1" min="0" max="10" value="${nota}" 
+                                               onchange="atualizarNota(${idx}, ${notaIdx}, parseFloat(this.value))">
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div class="materia-actions">
+                                <button class="btn-adicionar-nota" onclick="adicionarNota(${idx})">+ Adicionar Nota</button>
+                                ${materia.notas.length > 0 ? `
+                                    <div style="margin-left: auto; color: white;">
+                                        Média: <strong style="color: #ff0000;">${mediaMateria.toFixed(2)}</strong>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+            
+            // Atualizar resultado geral
+            const mediaGeral = calcularMediaGeral();
+            const status = getStatus(mediaGeral);
+            
+            document.getElementById('mediaGeral').innerHTML = mediaGeral.toFixed(2);
+            document.getElementById('status').innerHTML = status.texto;
+            document.getElementById('status').className = `status ${status.classe}`;
+        }
+
+        function escapeHtml(texto) {
+            const div = document.createElement('div');
+            div.textContent = texto;
+            return div.innerHTML;
+        }
+
+        function resetarTudo() {
+            if (confirm('Tem certeza? Isso vai apagar TODAS as matérias e notas.')) {
+                materias = [];
+                salvar();
+                renderizar();
+            }
+        }
+
+        renderizar();
+    </script>
+</body>
+</html>
