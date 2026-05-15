@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Leitor de Texto - Vozes Premium</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 750px;
+            width: 100%;
+        }
+
+        h1 { color: white; text-align: center; margin-bottom: 10px; }
+        .subtitulo { color: #aaa; text-align: center; margin-bottom: 25px; font-size: 14px; }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 15px;
+            background: #0f0f0f;
+            color: white;
+            border: 1px solid #333;
+            border-radius: 15px;
+            font-size: 16px;
+            resize: vertical;
+        }
+
+        .modos {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-modo {
+            flex: 1;
+            padding: 12px;
+            background: #333;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-modo.ativo {
+            background: #ff0000;
+        }
+
+        .vozes-panel {
+            display: none;
+        }
+
+        .vozes-panel.ativo {
+            display: block;
+        }
+
+        .botoes {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .btn-primario { background: #ff0000; color: white; }
+        .btn-secundario { background: #333; color: white; }
+        .btn-verde { background: #4CAF50; color: white; }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            color: #aaa;
+            text-align: center;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            background: #0f0f0f;
+            color: white;
+            border: 1px solid #333;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .dica {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #ff9800;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #555;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔊 Leitor de Texto Premium</h1>
+        <div class="subtitulo">Vozes naturais de IA | Modo Web Speech (offline) + Modo Uberduck (online)</div>
+
+        <textarea id="texto" placeholder="Digite o texto que deseja ouvir..."></textarea>
+
+        <div class="modos">
+            <button class="btn-modo" id="modoLocal" onclick="ativarModo('local')">🎤 Vozes do Sistema (offline)</button>
+            <button class="btn-modo" id="modoUberduck" onclick="ativarModo('uberduck')">🤖 Vozes Premium (online)</button>
+        </div>
+
+        <!-- Modo Local -->
+        <div id="panelLocal" class="vozes-panel">
+            <select id="vozLocal"></select>
+            <div class="controles">
+                <label>Velocidade: <input type="range" id="velocidade" min="0.5" max="2" step="0.1" value="1"></label>
+                <label>Tom: <input type="range" id="pitch" min="0.5" max="2" step="0.1" value="1"></label>
+            </div>
+        </div>
+
+        <!-- Modo Uberduck -->
+        <div id="panelUberduck" class="vozes-panel">
+            <select id="vozUberduck">
+                <option value="polly_joanna">🇺🇸 Joanna - Feminino (US)</option>
+                <option value="polly_matthew">🇺🇸 Matthew - Masculino (US)</option>
+                <option value="polly_ricardo">🇧🇷 Ricardo - Português (BR)</option>
+                <option value="polly_camila">🇧🇷 Camila - Português (BR)</option>
+                <option value="google_wavenet_a">🇺🇸 Google Wavenet A - Feminino</option>
+                <option value="azure_guy">🇺🇸 Azure Guy - Masculino</option>
+                <option value="azure_jane">🇺🇸 Azure Jane - Feminino</option>
+            </select>
+        </div>
+
+        <div class="botoes">
+            <button class="btn-primario" onclick="lerTexto()">🔊 Ler Texto</button>
+            <button class="btn-secundario" onclick="parar()">⏹️ Parar</button>
+            <button class="btn-verde" onclick="limpar()">🗑️ Limpar</button>
+        </div>
+
+        <div class="status" id="status">
+            ✅ Pronto para ler
+        </div>
+
+        <div class="dica">
+            💡 Dica: O modo Uberduck requer conexão com a internet e gera áudio com qualidade profissional.
+        </div>
+
+        <footer>
+            🔐 As vozes premium são geradas por IA da AWS, Google e Microsoft
+        </footer>
+    </div>
+
+    <script>
+        // Variáveis
+        let modoAtual = 'local';
+        let vozesDisponiveis = [];
+
+        // ============ PARTE 1: CONFIGURAÇÃO DO BACKEND ============
+        // IMPORTANTE: O backend será criado separadamente (ver API route abaixo)
+        const API_URL = '/api/uberduck-speak'; // Endpoint que vamos criar no Vercel
+
+        // ============ PARTE 2: MODO LOCAL (Web Speech API) ============
+        function carregarVozesLocal() {
+            vozesDisponiveis = speechSynthesis.getVoices();
+            const select = document.getElementById('vozLocal');
+            
+            // Filtrar vozes em português primeiro
+            const vozesPT = vozesDisponiveis.filter(v => v.lang.startsWith('pt'));
+            const outras = vozesDisponiveis.filter(v => !v.lang.startsWith('pt'));
+            
+            select.innerHTML = '';
+            [...vozesPT, ...outras].forEach((voz, i) => {
+                const option = document.createElement('option');
+                option.value = i;
+                let nome = voz.name;
+                if (voz.lang === 'pt-BR') nome = '🇧🇷 ' + nome;
+                else if (voz.lang === 'pt-PT') nome = '🇵🇹 ' + nome;
+                option.textContent = `${nome} (${voz.lang})`;
+                select.appendChild(option);
+            });
+        }
+
+        function lerLocal() {
+            const texto = document.getElementById('texto').value.trim();
+            if (!texto) {
+                alert('Digite algum texto!');
+                return false;
+            }
+            
+            speechSynthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(texto);
+            const vozIndex = document.getElementById('vozLocal').value;
+            if (vozIndex && vozesDisponiveis[vozIndex]) {
+                utterance.voice = vozesDisponiveis[vozIndex];
+            }
+            
+            utterance.rate = parseFloat(document.getElementById('velocidade').value);
+            utterance.pitch = parseFloat(document.getElementById('pitch').value);
+            
+            utterance.onstart = () => atualizarStatus('🔊 Lendo...', false);
+            utterance.onend = () => atualizarStatus('✅ Leitura concluída!');
+            utterance.onerror = () => atualizarStatus('❌ Erro na leitura');
+            
+            speechSynthesis.speak(utterance);
+            return true;
+        }
+
+        // ============ PARTE 3: MODO UBERDUCK (API) ============
+        async function lerUberduck() {
+            const texto = document.getElementById('texto').value.trim();
+            if (!texto) {
+                alert('Digite algum texto!');
+                return false;
+            }
+            
+            atualizarStatus('🎙️ Gerando áudio com IA...', false);
+            
+            try {
+                // Limitar texto (API aceita até 10.000 caracteres)
+                const textoLimitado = texto.substring(0, 5000);
+                
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        text: textoLimitado,
+                        voice: document.getElementById('vozUberduck').value
+                    })
+                });
+                
+                if (!response.ok) {
+                    const erro = await response.text();
+                    throw new Error(`Erro ${response.status}: ${erro}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.audio_url) {
+                    // Reproduzir o áudio
+                    const audio = new Audio(data.audio_url);
+                    audio.onplay = () => atualizarStatus('🎵 Tocando áudio gerado...');
+                    audio.onended = () => atualizarStatus('✅ Reprodução concluída!');
+                    audio.onerror = () => atualizarStatus('❌ Erro ao reproduzir áudio');
+                    await audio.play();
+                    return true;
+                } else {
+                    throw new Error('URL de áudio não recebida');
+                }
+                
+            } catch (error) {
+                console.error('Erro Uberduck:', error);
+                atualizarStatus(`❌ Erro: ${error.message}. Usando modo local como fallback...`, false);
+                
+                // Fallback para o modo local se a API falhar
+                setTimeout(() => lerLocal(), 100);
+                return false;
+            }
+        }
+
+        // ============ FUNÇÕES DE CONTROLE ============
+        function lerTexto() {
+            if (modoAtual === 'local') {
+                lerLocal();
+            } else {
+                lerUberduck();
+            }
+        }
+
+        function parar() {
+            if (modoAtual === 'local') {
+                speechSynthesis.cancel();
+            }
+            atualizarStatus('⏹️ Leitura interrompida', true);
+        }
+
+        function limpar() {
+            parar();
+            document.getElementById('texto').value = '';
+        }
+
+        function atualizarStatus(mensagem, temporaria = true) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `✅ ${mensagem}`;
+            if (temporaria) {
+                setTimeout(() => {
+                    if (statusDiv.innerHTML === `✅ ${mensagem}`) {
+                        statusDiv.innerHTML = '✅ Pronto para ler';
+                    }
+                }, 3000);
+            }
+        }
+
+        function ativarModo(modo) {
+            modoAtual = modo;
+            
+            document.getElementById('modoLocal').classList.toggle('ativo', modo === 'local');
+            document.getElementById('modoUberduck').classList.toggle('ativo', modo === 'uberduck');
+            
+            document.getElementById('panelLocal').classList.toggle('ativo', modo === 'local');
+            document.getElementById('panelUberduck').classList.toggle('ativo', modo === 'uberduck');
+            
+            const mensagem = modo === 'local' 
+                ? 'Modo local ativado (vozes do sistema, funciona offline)'
+                : 'Modo premium ativado (vozes de IA de alta qualidade)';
+            atualizarStatus(mensagem, true);
+        }
+
+        // Inicialização
+        speechSynthesis.onvoiceschanged = carregarVozesLocal;
+        carregarVozesLocal();
+        ativarModo('local');
+    </script>
+</body>
+</html>

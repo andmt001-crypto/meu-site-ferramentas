@@ -1,0 +1,83 @@
+// api/uberduck-speak.js
+export default async function handler(req, res) {
+    // Só aceita POST
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    const { text, voice } = req.body;
+
+    if (!text) {
+        return res.status(400).json({ error: 'Text is required' });
+    }
+
+    // Sua API key do Uberduck (NUNCA coloque isso no frontend!)
+    // Pega das variáveis de ambiente do Vercel
+    const UBERDUCK_API_KEY = process.env.UBERDUCK_API_KEY;
+    const UBERDUCK_API_SECRET = process.env.UBERDUCK_API_SECRET;
+
+    if (!UBERDUCK_API_KEY || !UBERDUCK_API_SECRET) {
+        console.error('Missing Uberduck credentials');
+        // Fallback: usar API gratuita como fallback
+        return await fallbackTTS(text, voice, res);
+    }
+
+    try {
+        // Autenticação básica da Uberduck [citation:6]
+        const auth = Buffer.from(`${UBERDUCK_API_KEY}:${UBERDUCK_API_SECRET}`).toString('base64');
+
+        const response = await fetch('https://api.uberduck.ai/v1/text-to-speech', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Basic ${auth}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                text: text,
+                voice: voice || 'polly_joanna',
+                output_format: 'mp3'
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.text();
+            throw new Error(`Uberduck API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        return res.status(200).json({
+            audio_url: data.audio_url,
+            success: true
+        });
+
+    } catch (error) {
+        console.error('Uberduck error:', error);
+        return await fallbackTTS(text, voice, res);
+    }
+}
+
+// Fallback usando API gratuita (opcional)
+async function fallbackTTS(text, voice, res) {
+    try {
+        // Usar serviço gratuito como fallback
+        const response = await fetch(`https://api.streamelements.com/kappa/v2/speech?voice=${voice || 'Joanna'}&text=${encodeURIComponent(text)}`);
+        
+        if (response.ok) {
+            const audioBuffer = await response.arrayBuffer();
+            const base64 = Buffer.from(audioBuffer).toString('base64');
+            return res.status(200).json({
+                audio_url: `data:audio/mp3;base64,${base64}`,
+                success: true,
+                fallback: true
+            });
+        }
+        
+        throw new Error('Fallback failed');
+    } catch (fallbackError) {
+        return res.status(500).json({ 
+            error: 'TTS service unavailable',
+            success: false 
+        });
+    }
+}

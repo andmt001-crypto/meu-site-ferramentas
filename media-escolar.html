@@ -25,7 +25,7 @@
             backdrop-filter: blur(10px);
             border-radius: 20px;
             padding: 30px;
-            max-width: 500px;
+            max-width: 550px;
             width: 100%;
         }
 
@@ -38,8 +38,37 @@
         .subtitulo {
             color: #aaa;
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             font-size: 14px;
+        }
+
+        .config {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            padding: 10px 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .config label {
+            color: white;
+        }
+
+        .config select {
+            padding: 8px;
+            background: #0f0f0f;
+            color: white;
+            border: 1px solid #333;
+            border-radius: 8px;
+        }
+
+        .info-sistema {
+            font-size: 12px;
+            color: #ff9800;
         }
 
         .materia {
@@ -54,6 +83,8 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .materia-nome {
@@ -80,7 +111,7 @@
 
         .nota-input {
             flex: 1;
-            min-width: 80px;
+            min-width: 70px;
         }
 
         .nota-input label {
@@ -104,6 +135,8 @@
             margin-top: 10px;
             display: flex;
             gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
         }
 
         .btn-adicionar-nota {
@@ -175,7 +208,16 @@
 <body>
     <div class="container">
         <h1>📚 Calculadora de Média Escolar</h1>
-        <div class="subtitulo">Adicione suas matérias e notas</div>
+        <div class="subtitulo">Portugal (0-20) • Brasil (0-10)</div>
+
+        <div class="config">
+            <label>🎓 Sistema de ensino:</label>
+            <select id="sistema" onchange="mudarSistema()">
+                <option value="pt">🇵🇹 Portugal (0 a 20)</option>
+                <option value="br">🇧🇷 Brasil (0 a 10)</option>
+            </select>
+            <div class="info-sistema" id="infoSistema">Notas válidas: 0 a 20</div>
+        </div>
 
         <div id="materias-container"></div>
 
@@ -192,11 +234,57 @@
     </div>
 
     <script>
-        // Carregar dados salvos ou iniciar vazio
+        // Sistema: 'pt' (0-20) ou 'br' (0-10)
+        let sistema = localStorage.getItem('sistemaEnsino') || 'pt';
         let materias = JSON.parse(localStorage.getItem('mediaEscolar')) || [];
+
+        function atualizarInterfaceSistema() {
+            const select = document.getElementById('sistema');
+            select.value = sistema;
+            const info = document.getElementById('infoSistema');
+            if (sistema === 'pt') {
+                info.innerHTML = '📌 Notas válidas: 0 a 20 | Aprovado: ≥10 | Recuperação: ≥7';
+                info.style.color = '#4CAF50';
+            } else {
+                info.innerHTML = '📌 Notas válidas: 0 a 10 | Aprovado: ≥7 | Recuperação: ≥5';
+                info.style.color = '#2196F3';
+            }
+        }
+
+        function mudarSistema() {
+            sistema = document.getElementById('sistema').value;
+            localStorage.setItem('sistemaEnsino', sistema);
+            atualizarInterfaceSistema();
+            
+            // Verificar se todas as notas estão dentro do novo limite
+            const maxNota = sistema === 'pt' ? 20 : 10;
+            let alterado = false;
+            
+            materias.forEach(materia => {
+                materia.notas = materia.notas.filter(nota => nota <= maxNota);
+                if (materia.notas.length === 0 && materia.notasAntigas) {
+                    materia.notas = [...materia.notasAntigas];
+                }
+            });
+            
+            salvar();
+            renderizar();
+        }
 
         function salvar() {
             localStorage.setItem('mediaEscolar', JSON.stringify(materias));
+        }
+
+        function getMaxNota() {
+            return sistema === 'pt' ? 20 : 10;
+        }
+
+        function getMinAprovado() {
+            return sistema === 'pt' ? 10 : 7;
+        }
+
+        function getMinRecuperacao() {
+            return sistema === 'pt' ? 7 : 5;
         }
 
         function adicionarMateria() {
@@ -220,15 +308,16 @@
         }
 
         function adicionarNota(materiaIndex) {
-            let nota = prompt('Digite a nota (0 a 10):', '7.0');
+            const maxNota = getMaxNota();
+            let nota = prompt(`Digite a nota (0 a ${maxNota}):`, (maxNota/2).toString());
             if (nota !== null) {
                 nota = parseFloat(nota.replace(',', '.'));
-                if (!isNaN(nota) && nota >= 0 && nota <= 10) {
+                if (!isNaN(nota) && nota >= 0 && nota <= maxNota) {
                     materias[materiaIndex].notas.push(nota);
                     salvar();
                     renderizar();
                 } else {
-                    alert('Nota inválida! Digite um valor entre 0 e 10.');
+                    alert(`Nota inválida! Digite um valor entre 0 e ${maxNota}.`);
                 }
             }
         }
@@ -240,9 +329,15 @@
         }
 
         function atualizarNota(materiaIndex, notaIndex, novoValor) {
-            materias[materiaIndex].notas[notaIndex] = novoValor;
-            salvar();
-            renderizar();
+            const maxNota = getMaxNota();
+            if (novoValor >= 0 && novoValor <= maxNota) {
+                materias[materiaIndex].notas[notaIndex] = novoValor;
+                salvar();
+                renderizar();
+            } else {
+                alert(`Nota inválida! Deve estar entre 0 e ${maxNota}.`);
+                renderizar();
+            }
         }
 
         function calcularMediaMateria(notas) {
@@ -270,13 +365,17 @@
         }
 
         function getStatus(media) {
-            if (media >= 7) return { texto: '✅ APROVADO!', classe: 'aprovado' };
-            if (media >= 5) return { texto: '⚠️ RECUPERAÇÃO', classe: 'recuperacao' };
+            const aprovado = getMinAprovado();
+            const recuperacao = getMinRecuperacao();
+            
+            if (media >= aprovado) return { texto: '✅ APROVADO!', classe: 'aprovado' };
+            if (media >= recuperacao) return { texto: '⚠️ RECUPERAÇÃO', classe: 'recuperacao' };
             return { texto: '❌ REPROVADO', classe: 'reprovado' };
         }
 
         function renderizar() {
             const container = document.getElementById('materias-container');
+            const maxNota = getMaxNota();
             
             if (materias.length === 0) {
                 container.innerHTML = '<div style="text-align: center; color: #666; padding: 30px;">Clique em "Nova Matéria" para começar</div>';
@@ -293,7 +392,7 @@
                                 ${materia.notas.map((nota, notaIdx) => `
                                     <div class="nota-input">
                                         <label>Nota ${notaIdx + 1}</label>
-                                        <input type="number" step="0.1" min="0" max="10" value="${nota}" 
+                                        <input type="number" step="0.1" min="0" max="${maxNota}" value="${nota}" 
                                                onchange="atualizarNota(${idx}, ${notaIdx}, parseFloat(this.value))">
                                     </div>
                                 `).join('')}
@@ -334,6 +433,8 @@
             }
         }
 
+        // Inicializar
+        atualizarInterfaceSistema();
         renderizar();
     </script>
 </body>
