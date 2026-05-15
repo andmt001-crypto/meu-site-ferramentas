@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Cofre de Imagens - Privado</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Tela de login */
+        .login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .login-box {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            width: 350px;
+        }
+
+        .login-box h1 {
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .login-box input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 10px;
+            background: #0f0f0f;
+            color: white;
+            font-size: 16px;
+        }
+
+        .login-box button {
+            background: #ff0000;
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        .login-box .erro {
+            color: #ff4444;
+            margin-top: 10px;
+            display: none;
+        }
+
+        /* Conteúdo principal (escondido até login) */
+        .main-content {
+            display: none;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        h1 {
+            color: white;
+        }
+
+        .btn {
+            background: #ff0000;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: scale(1.02);
+        }
+
+        .btn-secundario {
+            background: #333;
+        }
+
+        .btn-verde {
+            background: #28a745;
+        }
+
+        /* Álbuns */
+        .albuns {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .album-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+            min-width: 120px;
+        }
+
+        .album-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255,255,255,0.1);
+        }
+
+        .album-card.ativo {
+            border: 2px solid #ff0000;
+        }
+
+        .album-nome {
+            color: white;
+            font-size: 18px;
+        }
+
+        .album-contagem {
+            color: #888;
+            font-size: 12px;
+        }
+
+        .btn-novo-album {
+            background: rgba(255,255,255,0.05);
+            border: 2px dashed #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        /* Grid de imagens */
+        .grid-imagens {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .imagem-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            overflow: hidden;
+            transition: transform 0.2s;
+            position: relative;
+        }
+
+        .imagem-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .imagem-card img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+        }
+
+        .imagem-info {
+            padding: 10px;
+            color: white;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn-excluir-img {
+            background: #f44336;
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        /* Modal de upload */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1001;
+        }
+
+        .modal-content {
+            background: #1a1a1a;
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .modal-content h2 {
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: none;
+            background: #0f0f0f;
+            color: white;
+        }
+
+        .area-upload {
+            border: 2px dashed #666;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            margin: 15px 0;
+            cursor: pointer;
+        }
+
+        .vazio {
+            text-align: center;
+            color: #666;
+            padding: 50px;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #555;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Tela de Login -->
+<div class="login-screen" id="loginScreen">
+    <div class="login-box">
+        <h1>🔐 Cofre de Imagens</h1>
+        <p style="color: #aaa; margin-bottom: 20px;">Digite sua senha para acessar</p>
+        <input type="password" id="senhaMestra" placeholder="Senha">
+        <button onclick="fazerLogin()">Acessar Cofre</button>
+        <div class="erro" id="erroLogin">Senha incorreta!</div>
+        <p style="color: #666; font-size: 12px; margin-top: 20px;">Primeira vez? Digite qualquer senha para criar seu cofre</p>
+    </div>
+</div>
+
+<!-- Conteúdo Principal -->
+<div class="container main-content" id="mainContent">
+    <div class="header">
+        <h1>📷 Meu Cofre de Imagens</h1>
+        <div>
+            <button class="btn" onclick="abrirModalUpload()">➕ Nova Imagem</button>
+            <button class="btn btn-secundario" onclick="abrirModalAlbum()">📁 Novo Álbum</button>
+            <button class="btn btn-secundario" onclick="fazerLogout()">🚪 Sair</button>
+        </div>
+    </div>
+
+    <!-- Lista de Álbuns -->
+    <div class="albuns" id="albuns"></div>
+
+    <!-- Grid de Imagens -->
+    <div id="gridImagens" class="grid-imagens"></div>
+</div>
+
+<!-- Modal de Upload -->
+<div class="modal" id="modalUpload">
+    <div class="modal-content">
+        <h2>➕ Adicionar Imagem</h2>
+        <select id="albumSelect" style="width: 100%; padding: 10px; background: #0f0f0f; color: white; border-radius: 8px;"></select>
+        <div class="area-upload" onclick="document.getElementById('fileInput').click()">
+            📸 Clique para selecionar uma imagem
+        </div>
+        <input type="file" id="fileInput" accept="image/*" style="display: none;">
+        <button class="btn" onclick="uploadImagem()">Salvar Imagem</button>
+        <button class="btn btn-secundario" onclick="fecharModalUpload()">Cancelar</button>
+    </div>
+</div>
+
+<!-- Modal de Novo Álbum -->
+<div class="modal" id="modalAlbum">
+    <div class="modal-content">
+        <h2>📁 Novo Álbum</h2>
+        <input type="text" id="novoAlbumNome" placeholder="Nome do álbum">
+        <button class="btn" onclick="criarAlbum()">Criar</button>
+        <button class="btn btn-secundario" onclick="fecharModalAlbum()">Cancelar</button>
+    </div>
+</div>
+
+<script>
+    // Configurações
+    let senha = localStorage.getItem('senhaCofre') || null;
+    let dados = {
+        albuns: ['Todas'],
+        imagens: {} // { 'album': ['base64img1', 'base64img2'] }
+    };
+    let albumAtual = 'Todas';
+
+    // Inicializar dados
+    function inicializarDados() {
+        let saved = localStorage.getItem('cofreImagens');
+        if (saved) {
+            try {
+                let parsed = JSON.parse(saved);
+                dados.albuns = parsed.albuns || ['Todas'];
+                dados.imagens = parsed.imagens || {};
+                if (!dados.imagens['Todas']) dados.imagens['Todas'] = [];
+            } catch(e) {}
+        } else {
+            dados.imagens['Todas'] = [];
+        }
+        renderizarAlbuns();
+        renderizarImagens();
+    }
+
+    function salvarDados() {
+        localStorage.setItem('cofreImagens', JSON.stringify({
+            albuns: dados.albuns,
+            imagens: dados.imagens
+        }));
+    }
+
+    function renderizarAlbuns() {
+        const container = document.getElementById('albuns');
+        container.innerHTML = '';
+        
+        dados.albuns.forEach(album => {
+            const card = document.createElement('div');
+            card.className = `album-card ${albumAtual === album ? 'ativo' : ''}`;
+            card.onclick = () => {
+                albumAtual = album;
+                renderizarAlbuns();
+                renderizarImagens();
+            };
+            card.innerHTML = `
+                <div class="album-nome">${album}</div>
+                <div class="album-contagem">${dados.imagens[album]?.length || 0} imagens</div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function renderizarImagens() {
+        const container = document.getElementById('gridImagens');
+        const imagens = dados.imagens[albumAtual] || [];
+        
+        if (imagens.length === 0) {
+            container.innerHTML = '<div class="vazio">📭 Nenhuma imagem neste álbum. Clique em "Nova Imagem" para adicionar.</div>';
+            return;
+        }
+        
+        container.innerHTML = '';
+        imagens.forEach((imgBase64, idx) => {
+            const card = document.createElement('div');
+            card.className = 'imagem-card';
+            card.innerHTML = `
+                <img src="${imgBase64}" alt="Imagem">
+                <div class="imagem-info">
+                    <span>Imagem ${idx + 1}</span>
+                    <button class="btn-excluir-img" onclick="excluirImagem(${idx})">🗑️</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function excluirImagem(index) {
+        if (confirm('Tem certeza que quer excluir esta imagem?')) {
+            dados.imagens[albumAtual].splice(index, 1);
+            salvarDados();
+            renderizarImagens();
+            renderizarAlbuns();
+        }
+    }
+
+    function abrirModalUpload() {
+        const select = document.getElementById('albumSelect');
+        select.innerHTML = '';
+        dados.albuns.forEach(album => {
+            const option = document.createElement('option');
+            option.value = album;
+            option.textContent = album;
+            select.appendChild(option);
+        });
+        document.getElementById('modalUpload').style.display = 'flex';
+    }
+
+    function fecharModalUpload() {
+        document.getElementById('modalUpload').style.display = 'none';
+        document.getElementById('fileInput').value = '';
+    }
+
+    function uploadImagem() {
+        const file = document.getElementById('fileInput').files[0];
+        const album = document.getElementById('albumSelect').value;
+        
+        if (!file) {
+            alert('Selecione uma imagem!');
+            return;
+        }
+        
+        if (!file.type.startsWith('image/')) {
+            alert('Por favor, selecione um arquivo de imagem válido (JPG, PNG, GIF)!');
+            return;
+        }
+        
+        if (file.size > 50 * 1024 * 1024) {
+            alert('Arquivo muito grande! Máximo 50MB.');
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            if (!dados.imagens[album]) dados.imagens[album] = [];
+            dados.imagens[album].push(e.target.result);
+            salvarDados();
+            renderizarImagens();
+            renderizarAlbuns();
+            fecharModalUpload();
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function abrirModalAlbum() {
+        document.getElementById('modalAlbum').style.display = 'flex';
+    }
+
+    function fecharModalAlbum() {
+        document.getElementById('modalAlbum').style.display = 'none';
+        document.getElementById('novoAlbumNome').value = '';
+    }
+
+    function criarAlbum() {
+        const nome = document.getElementById('novoAlbumNome').value.trim();
+        if (nome && !dados.albuns.includes(nome)) {
+            dados.albuns.push(nome);
+            dados.imagens[nome] = [];
+            salvarDados();
+            renderizarAlbuns();
+            fecharModalAlbum();
+        } else if (dados.albuns.includes(nome)) {
+            alert('Já existe um álbum com este nome!');
+        } else {
+            alert('Digite um nome válido!');
+        }
+    }
+
+    // Login
+    function fazerLogin() {
+        const senhaDigitada = document.getElementById('senhaMestra').value;
+        
+        if (!senha) {
+            senha = senhaDigitada;
+            localStorage.setItem('senhaCofre', senha);
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+            inicializarDados();
+        } else if (senhaDigitada === senha) {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+            inicializarDados();
+        } else {
+            document.getElementById('erroLogin').style.display = 'block';
+        }
+    }
+
+    function fazerLogout() {
+        document.getElementById('loginScreen').style.display = 'flex';
+        document.getElementById('mainContent').style.display = 'none';
+        document.getElementById('senhaMestra').value = '';
+    }
+
+    // Verificar se já está logado
+    if (senha) {
+        document.getElementById('loginScreen').style.display = 'flex';
+        document.getElementById('mainContent').style.display = 'none';
+    }
+</script>
+</body>
+</html>
