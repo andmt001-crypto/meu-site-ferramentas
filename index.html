@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Minhas Ferramentas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitulo {
+            text-align: center;
+            color: #888;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            background: rgba(255,255,255,0.08);
+        }
+
+        .card .icone {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .card h2 {
+            color: white;
+            margin-bottom: 10px;
+            font-size: 1.5em;
+        }
+
+        .card p {
+            color: #aaa;
+            font-size: 0.9em;
+            margin-bottom: 20px;
+        }
+
+        .card .link {
+            display: inline-block;
+            background: #ff0000;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .card .link:hover {
+            background: #cc0000;
+        }
+
+        .status {
+            text-align: center;
+            margin-top: 40px;
+            color: #666;
+            font-size: 12px;
+        }
+
+        .status .online {
+            color: #4CAF50;
+        }
+
+        .status .offline {
+            color: #ff4444;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            color: #555;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🚀 Minhas Ferramentas</h1>
+    <div class="subtitulo">Tudo o que você precisa em um só lugar</div>
+
+    <div class="grid">
+        
+        <!-- MeTube - Download de Vídeos -->
+        <div class="card">
+            <div class="icone">📥</div>
+            <h2>MeTube</h2>
+            <p>Baixe vídeos do YouTube, Shorts e outros sites. Suporte a playlists.</p>
+            <a href="http://localhost:8081" class="link" target="_blank">Abrir MeTube</a>
+        </div>
+
+        <!-- Gerenciador de Senhas - NOVO! -->
+        <div class="card">
+            <div class="icone">🔐</div>
+            <h2>Gerenciador de Senhas</h2>
+            <p>Guarde suas senhas de forma segura. Gere senhas fortes e organize tudo.</p>
+            <a href="gerenciador-senhas.html" class="link">Abrir Gerenciador</a>
+        </div>
+
+        <!-- Gerador de QR Code -->
+        <div class="card">
+            <div class="icone">📱</div>
+            <h2>Gerador de QR Code</h2>
+            <p>Transforme qualquer URL em QR Code. Baixe em PNG ou imprima.</p>
+            <a href="qrcode.html" class="link">Gerar QR Code</a>
+        </div>
+
+        <!-- Lista de Tarefas -->
+        <div class="card">
+            <div class="icone">📝</div>
+            <h2>Lista de Tarefas</h2>
+            <p>Organize seu dia com uma lista de afazeres. Salva automaticamente.</p>
+            <a href="tarefas.html" class="link">Minhas Tarefas</a>
+        </div>
+
+        <!-- Conversor de Moedas -->
+        <div class="card">
+            <div class="icone">💰</div>
+            <h2>Conversor de Moedas</h2>
+            <p>Converta valores entre Real, Dólar e Euro com câmbio atualizado.</p>
+            <a href="conversor.html" class="link">Converter</a>
+        </div>
+
+    </div>
+
+    <div class="status" id="status">
+        🔍 Verificando status do MeTube...
+    </div>
+
+    <footer>
+        🛠️ Suas ferramentas pessoais | Atualizado em 2026
+    </footer>
+
+    <script>
+        // Verifica se o MeTube está rodando
+        async function verificarMeTube() {
+            const statusDiv = document.getElementById('status');
+            try {
+                const resposta = await fetch('http://localhost:8081', {
+                    method: 'HEAD',
+                    mode: 'no-cors'
+                });
+                statusDiv.innerHTML = '✅ MeTube: <span class="online">Online</span> - Pronto para downloads!';
+            } catch (erro) {
+                statusDiv.innerHTML = '⚠️ MeTube: <span class="offline">Offline</span> - Execute o Docker para ativar os downloads';
+            }
+        }
+
+        verificarMeTube();
+        setInterval(verificarMeTube, 30000);
+    </script>
+
+</body>
+</html>

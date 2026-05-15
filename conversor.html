@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Conversor de Moedas</title>
+    <style>
+        body { font-family: Arial; text-align: center; padding: 50px; background: #0f0f0f; color: white; }
+        input, select, button { padding: 10px; margin: 10px; font-size: 16px; border-radius: 8px; }
+        button { background: #ff0000; color: white; cursor: pointer; }
+        .resultado { font-size: 24px; margin-top: 20px; color: #4CAF50; }
+    </style>
+</head>
+<body>
+    <h1>💰 Conversor de Moedas</h1>
+    <input type="number" id="valor" placeholder="Valor">
+    <select id="de">
+        <option value="BRL">Real (BRL)</option>
+        <option value="USD">Dólar (USD)</option>
+        <option value="EUR">Euro (EUR)</option>
+    </select>
+    <span>→</span>
+    <select id="para">
+        <option value="USD">Dólar (USD)</option>
+        <option value="BRL">Real (BRL)</option>
+        <option value="EUR">Euro (EUR)</option>
+    </select>
+    <button onclick="converter()">Converter</button>
+    <div class="resultado" id="resultado"></div>
+    <script>
+        async function converter() {
+            const valor = document.getElementById('valor').value;
+            const de = document.getElementById('de').value;
+            const para = document.getElementById('para').value;
+            
+            const resposta = await fetch(`https://api.exchangerate-api.com/v4/latest/${de}`);
+            const dados = await resposta.json();
+            const convertido = valor * dados.rates[para];
+            
+            document.getElementById('resultado').innerHTML = `${valor} ${de} = ${convertido.toFixed(2)} ${para}`;
+        }
+    </script>
+</body>
+</html>
